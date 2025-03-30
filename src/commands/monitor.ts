@@ -159,21 +159,9 @@ async function setLoopForVintedScraping(channelId: string) {
       );
       const url = `${VINTED_URL}/catalog/items?${monitor.queryStringForAPI}`;
 
-      const curlImpersonate = new CurlImpersonate(url, {
-        method: "GET",
-        impersonate: "chrome-116",
-        headers: {
-          cookie: `access_token_web=${cookie};`,
-          origin: "https://vinted.fr",
-          "sec-fetch-site": "same-origin",
-          accept: "application/json, text/plain, */*",
-        },
-      });
-
-      const { response, statusCode } = await curlImpersonate.makeRequest();
-
-      const data = response as any;
-      // const res = await fetch(url, {
+      // const curlImpersonate = new CurlImpersonate(url, {
+      //   method: "GET",
+      //   impersonate: "chrome-116",
       //   headers: {
       //     cookie: `access_token_web=${cookie};`,
       //     origin: "https://vinted.fr",
@@ -182,25 +170,37 @@ async function setLoopForVintedScraping(channelId: string) {
       //   },
       // });
 
-      if (statusCode && ["4", "5"].includes(statusCode.toString()[0])) {
-        console.error(data);
-        continue;
-      }
+      // const { response, statusCode } = await curlImpersonate.makeRequest();
 
-      // console.log(data);
-      // let data;
+      // const data = response as any;
+      const res = await fetch(url, {
+        headers: {
+          cookie: `access_token_web=${cookie};`,
+          origin: "https://vinted.fr",
+          "sec-fetch-site": "same-origin",
+          accept: "application/json, text/plain, */*",
+        },
+      });
 
-      // if (res.headers.get("content-type")?.includes("text"))
-      //   data = await res.text();
-      // else data = await res.json();
-
-      // if (!res.ok) {
-      //   console.log(res);
-
-      //   console.log(data);
-
+      // if (statusCode && ["4", "5"].includes(statusCode.toString()[0])) {
+      //   console.error(data);
       //   continue;
       // }
+
+      // console.log(data);
+      let data;
+
+      if (res.headers.get("content-type")?.includes("text"))
+        data = await res.text();
+      else data = await res.json();
+
+      if (!res.ok) {
+        console.log(res);
+
+        console.log(data);
+
+        continue;
+      }
 
       console.log(`Fetched ${data.items.length} items!`);
 
