@@ -149,7 +149,7 @@ async function setLoopForVintedScraping(channelId: string) {
       await new Promise((res) => {
         setTimeout(() => {
           res("s");
-        }, 1000 * 60);
+        }, 1000 * 10);
       });
       console.log(`Wait finished for ${channelId}!`);
       const monitor = monitors[channelId];
