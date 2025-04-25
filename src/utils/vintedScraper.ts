@@ -76,11 +76,11 @@ async function processItemsForMonitor(monitor: Monitor) {
 
     console.log(`Fetched ${data.items.length} items!`);
 
-    const newItemIds = data.items.map((i: any) => i.id);
+    const fetchedItemIds = data.items.map((i: any) => i.id);
     if (oldItems.length === 0) {
       console.log("First time pushing in cache!");
 
-      ItemCache.setItems(monitor.channelId, newItemIds);
+      ItemCache.setItems(monitor.channelId, fetchedItemIds);
 
       return;
     }
@@ -89,9 +89,11 @@ async function processItemsForMonitor(monitor: Monitor) {
       (item: any) => !oldItems.includes(item.id)
     );
 
+    const newItemIds = newItems.map((i: any) => i.id);
+
     console.log(`Fetched ${newItems.length} new items!`);
 
-    console.log(newItems.map((i: any) => i.id));
+    console.log(newItemIds);
 
     if (newItems.length === 96) {
       console.log(

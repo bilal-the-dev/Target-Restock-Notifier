@@ -12,7 +12,7 @@ class ItemCache {
   addItems(channelId: string, items: any[]) {
     const oldItems = this.#productMap.get(channelId) ?? [];
 
-    this.#productMap.set(channelId, [oldItems, ...items]);
+    this.#productMap.set(channelId, [...oldItems, ...items]);
   }
 }
 
