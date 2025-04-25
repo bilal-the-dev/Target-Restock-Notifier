@@ -30,14 +30,16 @@ async function processItemsForMonitor(monitor: Monitor) {
 
     const curlImpersonate = new CurlImpersonate(url, {
       method: "GET",
-      impersonate: "chrome-116",
+      impersonate: "chrome-110",
       headers: generateHeaders(
         monitor.vintedURL,
         `access_token_web=${cookieData!.access_token}; refresh_token_web=${cookieData!.refresh_token};`
       ),
     });
 
-    const { response, statusCode } = await curlImpersonate.makeRequest();
+    const res = await curlImpersonate.makeRequest();
+
+    const { response, statusCode } = res;
 
     const data = response as any;
 
@@ -56,7 +58,8 @@ async function processItemsForMonitor(monitor: Monitor) {
     }
 
     if (statusCode && ["4", "5"].includes(statusCode.toString()[0])) {
-      console.error(data);
+      console.log(res);
+      console.log(data);
       return;
     }
 
