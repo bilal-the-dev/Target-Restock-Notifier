@@ -106,11 +106,11 @@ async function processItemsForMonitor(monitor: Monitor) {
       return;
     }
 
-    const messages = [];
+    const embeds = [];
 
-    for (const p of newItems.slice(0, 3)) {
+    for (const p of newItems.slice(0, 4)) {
       // max send 3 messages
-      let body: { embeds: any[] } = { embeds: [] };
+      // let body: { embeds: any[] } = { embeds: [] };
 
       const fields = [
         {
@@ -137,30 +137,49 @@ async function processItemsForMonitor(monitor: Monitor) {
         ]),
       ];
 
-      body.embeds = [
-        {
-          color: parseInt("008000", 16),
-          title: `:flag_fr: ${p.title}`,
-          url: p.url,
-          author: {
-            name: p.user.login,
-            url: p.user.profile_url,
-            ...(p.user.photo?.url && { icon_url: p.user.photo.url }),
-          },
-          footer: { text: "©️ Vinted Scraper" },
-          image: { url: p.photo.url },
-          fields,
-        },
-      ];
+      // body.embeds = [
+      //   {
+      //     color: parseInt("008000", 16),
+      //     title: `:flag_fr: ${p.title}`,
+      //     url: p.url,
+      //     author: {
+      //       name: p.user.login,
+      //       url: p.user.profile_url,
+      //       ...(p.user.photo?.url && { icon_url: p.user.photo.url }),
+      //     },
+      //     footer: { text: "©️ Vinted Scraper" },
+      //     image: { url: p.photo.url },
+      //     fields,
+      //   },
+      // ];
 
-      messages.push(body);
+      embeds.push({
+        color: parseInt("008000", 16),
+        title: `:flag_fr: ${p.title}`,
+        url: p.url,
+        author: {
+          name: p.user.login,
+          url: p.user.profile_url,
+          ...(p.user.photo?.url && { icon_url: p.user.photo.url }),
+        },
+        footer: { text: "©️ Vinted Scraper" },
+        image: { url: p.photo.url },
+        fields,
+      });
+
+      // messages.push(body);
     }
 
-    await Promise.all(
-      messages.map((m) =>
-        sendWebhook({ id: monitor.webhookId, token: monitor.webhookToken }, m)
-      )
+    await sendWebhook(
+      { id: monitor.webhookId, token: monitor.webhookToken },
+      { embeds }
     ).catch(console.log);
+
+    // await Promise.all(
+    //   messages.map((m) =>
+    //     sendWebhook({ id: monitor.webhookId, token: monitor.webhookToken }, m)
+    //   )
+    // ).catch(console.log);
 
     ItemCache.addItems(monitor.channelId, newItemIds);
   } catch (error) {
