@@ -24,7 +24,7 @@ export function convertToQueryString(vintedURL: string): string {
     );
   }
 
-  console.log(customQueryParams.toString());
+  // console.log(customQueryParams.toString());
 
   return customQueryParams.toString();
 }

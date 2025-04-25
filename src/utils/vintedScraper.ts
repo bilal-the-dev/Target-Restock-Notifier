@@ -10,7 +10,7 @@ let cookieData: { access_token: string; refresh_token: string } | undefined;
 export async function scrapeVintedMonitors() {
   const monitors = getAllMonitors.all();
 
-  console.log(`Scraping ${monitors.length} monitors!`);
+  // console.log(`Scraping ${monitors.length} monitors!`);
 
   for (const monitor of monitors) {
     await processItemsForMonitor(monitor);
@@ -19,9 +19,9 @@ export async function scrapeVintedMonitors() {
 
 async function processItemsForMonitor(monitor: Monitor) {
   try {
-    console.log(
-      `Scraping for the channel ${monitor.channelId} with vinted monitor ${monitor.vintedURL}`
-    );
+    // console.log(
+    //   `Scraping for the channel ${monitor.channelId} with vinted monitor ${monitor.vintedURL}`
+    // );
 
     const oldItems = ItemCache.getItems(monitor.channelId);
     const queryStringForAPI = convertToQueryString(monitor.vintedURL);
@@ -97,7 +97,7 @@ async function processItemsForMonitor(monitor: Monitor) {
 
     console.log(`Fetched ${newItems.length} new items!`);
 
-    console.log(newItemIds);
+    // console.log(newItemIds);
 
     if (newItems.length === 96) {
       console.log(
@@ -170,10 +170,11 @@ async function processItemsForMonitor(monitor: Monitor) {
       // messages.push(body);
     }
 
-    await sendWebhook(
-      { id: monitor.webhookId, token: monitor.webhookToken },
-      { embeds }
-    ).catch(console.log);
+    if (embeds.length)
+      await sendWebhook(
+        { id: monitor.webhookId, token: monitor.webhookToken },
+        { embeds }
+      ).catch(console.log);
 
     // await Promise.all(
     //   messages.map((m) =>
