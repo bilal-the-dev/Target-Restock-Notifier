@@ -3,7 +3,7 @@ import { Monitor } from "./typings/types.js";
 import { convertToQueryString } from "./parse.js";
 import ItemCache from "../structures/ItemCache.js";
 import { sendWebhook } from "./webhook.js";
-import CurlImpersonate from "node-curl-impersonate";
+// import CurlImpersonate from "node-curl-impersonate";
 
 let cookieData: { access_token: string; refresh_token: string } | undefined;
 
@@ -28,55 +28,55 @@ async function processItemsForMonitor(monitor: Monitor) {
 
     const url = `${process.env.VINTED_API_BASE_URL}/catalog/items?${queryStringForAPI}`;
 
-    const curlImpersonate = new CurlImpersonate(url, {
-      method: "GET",
-      impersonate: "chrome-110",
-      headers: generateHeaders(
-        monitor.vintedURL,
-        `access_token_web=${cookieData!.access_token}; refresh_token_web=${cookieData!.refresh_token};`
-      ),
-    });
-
-    const res = await curlImpersonate.makeRequest();
-
-    const { response, statusCode } = res;
-
-    const data = response as any;
-
-    // const res = await fetch(url, {
+    // const curlImpersonate = new CurlImpersonate(url, {
+    //   method: "GET",
+    //   impersonate: "chrome-110",
     //   headers: generateHeaders(
     //     monitor.vintedURL,
     //     `access_token_web=${cookieData!.access_token}; refresh_token_web=${cookieData!.refresh_token};`
     //   ),
     // });
 
-    // const statusCode = res.status
+    // const res = await curlImpersonate.makeRequest();
+
+    // const { response, statusCode } = res;
+
+    // const data = response as any;
+
+    const res = await fetch(url, {
+      headers: generateHeaders(
+        monitor.vintedURL,
+        `access_token_web=${cookieData!.access_token}; refresh_token_web=${cookieData!.refresh_token};`
+      ),
+    });
+
+    const statusCode = res.status;
 
     if (statusCode === 401) {
       // refreshing cookie because they expires but skipping this monitor
       return await fetchVintedAccessToken();
     }
 
-    if (statusCode && ["4", "5"].includes(statusCode.toString()[0])) {
-      console.log(res);
-      console.log(data);
-      return;
-    }
-
-    // console.log(data);
-    // let data;
-
-    // if (res.headers.get("content-type")?.includes("text"))
-    //   data = await res.text();
-    // else data = await res.json();
-
-    // if (!res.ok) {
+    // if (statusCode && ["4", "5"].includes(statusCode.toString()[0])) {
     //   console.log(res);
-
     //   console.log(data);
-
     //   return;
     // }
+
+    // console.log(data);
+    let data;
+
+    if (res.headers.get("content-type")?.includes("text"))
+      data = await res.text();
+    else data = await res.json();
+
+    if (!res.ok) {
+      console.log(res);
+
+      console.log(data);
+
+      return;
+    }
 
     console.log(`Fetched ${data.items.length} items!`);
 
@@ -106,62 +106,61 @@ async function processItemsForMonitor(monitor: Monitor) {
       return;
     }
 
+    const messages = [];
+
     for (const p of newItems.slice(0, 3)) {
       // max send 3 messages
-      try {
-        // send message to discord!!!
-        let body: { embeds: any[] } = { embeds: [] };
+      let body: { embeds: any[] } = { embeds: [] };
 
-        const fields = [
-          {
-            name: ":hourglass: Public",
-            value: `<t:${Math.floor(Date.now() / 1000)}:R>`,
-            inline: true,
-          },
-          { name: "🔖 Brand", value: p.brand_title, inline: true },
-          {
-            name: "💰 Price",
-            value: `${p.price.amount} Euro | Totalle: ${p.total_item_price.amount} Euro`,
-            inline: true,
-          },
-          { name: "💎 Status", value: p.status, inline: true },
-          { name: "👀 Views", value: p.view_count, inline: true },
-          { name: "💘 Favourites", value: p.favourite_count, inline: true },
-          {
-            name: "🐛 Extra Details",
-            value: `${p.item_box.first_line} | ${p.item_box.second_line}`,
-            inline: true,
-          },
-          ...(p.size_title && [
-            { name: "📏 Size", value: p.size_title, inline: true },
-          ]),
-        ];
+      const fields = [
+        {
+          name: ":hourglass: Public",
+          value: `<t:${Math.floor(Date.now() / 1000)}:R>`,
+          inline: true,
+        },
+        { name: "🔖 Brand", value: p.brand_title, inline: true },
+        {
+          name: "💰 Price",
+          value: `${p.price.amount} Euro | Totalle: ${p.total_item_price.amount} Euro`,
+          inline: true,
+        },
+        { name: "💎 Status", value: p.status, inline: true },
+        { name: "👀 Views", value: p.view_count, inline: true },
+        { name: "💘 Favourites", value: p.favourite_count, inline: true },
+        {
+          name: "🐛 Extra Details",
+          value: `${p.item_box.first_line} | ${p.item_box.second_line}`,
+          inline: true,
+        },
+        ...(p.size_title && [
+          { name: "📏 Size", value: p.size_title, inline: true },
+        ]),
+      ];
 
-        body.embeds = [
-          {
-            color: parseInt("008000", 16),
-            title: `:flag_fr: ${p.title}`,
-            url: p.url,
-            author: {
-              name: p.user.login,
-              url: p.user.profile_url,
-              ...(p.user.photo?.url && { icon_url: p.user.photo.url }),
-            },
-            footer: { text: "©️ Vinted Scraper" },
-            image: { url: p.photo.url },
-            fields,
+      body.embeds = [
+        {
+          color: parseInt("008000", 16),
+          title: `:flag_fr: ${p.title}`,
+          url: p.url,
+          author: {
+            name: p.user.login,
+            url: p.user.profile_url,
+            ...(p.user.photo?.url && { icon_url: p.user.photo.url }),
           },
-        ];
+          footer: { text: "©️ Vinted Scraper" },
+          image: { url: p.photo.url },
+          fields,
+        },
+      ];
 
-        await sendWebhook(
-          { id: monitor.webhookId, token: monitor.webhookToken },
-          body
-        );
-        console.log("sent request");
-      } catch (error) {
-        console.log(error);
-      }
+      messages.push(body);
     }
+
+    await Promise.all(
+      messages.map((m) =>
+        sendWebhook({ id: monitor.webhookId, token: monitor.webhookToken }, m)
+      )
+    ).catch(console.log);
 
     ItemCache.addItems(monitor.channelId, newItemIds);
   } catch (error) {
