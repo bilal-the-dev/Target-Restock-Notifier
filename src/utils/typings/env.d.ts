@@ -2,6 +2,8 @@ declare global {
   namespace NodeJS {
     interface ProcessEnv {
       TOKEN: string;
+      VINTED_BASE_URL: string;
+      VINTED_OLD_REFRESH_TOKEN: string;
     }
   }
 }

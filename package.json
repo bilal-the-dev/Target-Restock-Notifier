@@ -20,6 +20,9 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^11.9.1",
+    "cron": "^4.3.0",
     "discord.js": "^14.18.0",
     "node-curl-impersonate": "^1.5.4"
   }

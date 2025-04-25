@@ -14,3 +14,10 @@ export interface extendedAPICommand
   ): Promise<Array<ApplicationCommandOptionChoiceData | string>>;
   execute(interaction: ChatInputCommandInteraction): Promise<any>;
 }
+
+export interface Monitor {
+  channelId: string;
+  vintedURL: string;
+  webhookId: string;
+  webhookToken: string;
+}
