@@ -3,6 +3,7 @@ import { Monitor } from "./typings/types.js";
 import { convertToQueryString } from "./parse.js";
 import ItemCache from "../structures/ItemCache.js";
 import { sendWebhook } from "./webhook.js";
+import CurlImpersonate from "node-curl-impersonate";
 
 let cookieData: { access_token: string; refresh_token: string } | undefined;
 
@@ -27,52 +28,52 @@ async function processItemsForMonitor(monitor: Monitor) {
 
     const url = `${process.env.VINTED_API_BASE_URL}/catalog/items?${queryStringForAPI}`;
 
-    // const curlImpersonate = new CurlImpersonate(url, {
-    //   method: "GET",
-    //   impersonate: "chrome-116",
-    //   headers: {
-    //     cookie: `access_token_web=${cookie};`,
-    //     origin: "https://vinted.fr",
-    //     "sec-fetch-site": "same-origin",
-    //     accept: "application/json, text/plain, */*",
-    //   },
-    // });
-
-    // const { response, statusCode } = await curlImpersonate.makeRequest();
-
-    // const data = response as any;
-
-    const res = await fetch(url, {
+    const curlImpersonate = new CurlImpersonate(url, {
+      method: "GET",
+      impersonate: "chrome-116",
       headers: generateHeaders(
         monitor.vintedURL,
         `access_token_web=${cookieData!.access_token}; refresh_token_web=${cookieData!.refresh_token};`
       ),
     });
 
-    if (res.status === 401) {
+    const { response, statusCode } = await curlImpersonate.makeRequest();
+
+    const data = response as any;
+
+    // const res = await fetch(url, {
+    //   headers: generateHeaders(
+    //     monitor.vintedURL,
+    //     `access_token_web=${cookieData!.access_token}; refresh_token_web=${cookieData!.refresh_token};`
+    //   ),
+    // });
+
+    // const statusCode = res.status
+
+    if (statusCode === 401) {
       // refreshing cookie because they expires but skipping this monitor
       return await fetchVintedAccessToken();
     }
 
-    // if (statusCode && ["4", "5"].includes(statusCode.toString()[0])) {
-    //   console.error(data);
-    //   continue;
-    // }
-
-    // console.log(data);
-    let data;
-
-    if (res.headers.get("content-type")?.includes("text"))
-      data = await res.text();
-    else data = await res.json();
-
-    if (!res.ok) {
-      console.log(res);
-
-      console.log(data);
-
+    if (statusCode && ["4", "5"].includes(statusCode.toString()[0])) {
+      console.error(data);
       return;
     }
+
+    // console.log(data);
+    // let data;
+
+    // if (res.headers.get("content-type")?.includes("text"))
+    //   data = await res.text();
+    // else data = await res.json();
+
+    // if (!res.ok) {
+    //   console.log(res);
+
+    //   console.log(data);
+
+    //   return;
+    // }
 
     console.log(`Fetched ${data.items.length} items!`);
 
