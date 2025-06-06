@@ -13,6 +13,7 @@ import { STOCK_STATUS } from "./constants.js";
 import { StockStatus } from "./typings/types.js";
 
 const DEBUG = process.env.DEBUG === "true";
+const isProd = process.env.NODE_ENV === "production";
 const ssPath = "./screenshots/";
 
 async function isInStock(
@@ -50,7 +51,13 @@ export default async function monitorLoop(client: Client<true>) {
 
     const monitors = getAllMonitors.all();
 
-    const browser = await puppeteer.launch({ headless: false, devtools: true });
+    const browser = await puppeteer.launch({
+      headless: isProd,
+      devtools: isProd,
+      ...(process.platform === "linux" && {
+        executablePath: "/usr/bin/chromium-browser",
+      }),
+    });
 
     for (const monitor of monitors) {
       try {

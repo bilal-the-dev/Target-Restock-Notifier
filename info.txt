@@ -1,4 +1,0 @@
-1. So at the time of writing, the bot is scraping one vinted url after every 30 seconds. Works fine, doesnt get blocked.
-2. Did not need to use curl impersonate so far
-3. Will update it to scrape multiple urls at the same time and check if vinted bans based on multiple requests from same ip or by changing headers if it fixes anything
-4. After running (1.) for an hour, it returned 403 cf migitated error (maybe breaking cf firewall rule) for some of requests. Either because of many requests or fingerprinting? so using curl impersonate to check
