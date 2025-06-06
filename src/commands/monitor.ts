@@ -1,25 +1,33 @@
 import { ChannelType } from "discord.js";
-import { extendedAPICommand } from "../utils/typings/types.js";
 import { EmbedBuilder } from "@discordjs/builders";
-
+import { randomUUID } from "crypto";
 import {
   createMonitor,
-  deleteMonitor,
+  deleteMonitorByName,
+  getMonitorByName,
+  getAllMonitorNames,
   getAllMonitors,
 } from "../database/queries.js";
+import { extendedAPICommand } from "../utils/typings/types.js";
 
 export default {
   name: "monitor",
-  description: "Manage Vinted monitor.",
+  description: "Manage Target product monitors",
   options: [
     {
       name: "set",
-      description: "Set a Vinted monitor for this channel.",
+      description: "Create or update a monitor for a Target product",
       type: 1,
       options: [
         {
-          name: "vinted_url",
-          description: "The Vinted URL to monitor.",
+          name: "monitor_name",
+          description: "Unique name for this monitor",
+          type: 3,
+          required: true,
+        },
+        {
+          name: "target_url",
+          description: "Target product URL to monitor",
           type: 3,
           required: true,
         },
@@ -27,83 +35,129 @@ export default {
     },
     {
       name: "remove",
-      description: "Remove the Vinted monitor for this channel.",
+      description: "Remove a monitor by name",
       type: 1,
+      options: [
+        {
+          name: "monitor_name",
+          description: "Name of the monitor to delete",
+          type: 3,
+          required: true,
+          autocomplete: true,
+        },
+      ],
     },
     {
       name: "view",
-      description: "View the Vinted monitor for channels.",
+      description: "View a monitor by name",
+      type: 1,
+      options: [
+        {
+          name: "monitor_name",
+          description: "Name of the monitor to view",
+          type: 3,
+          required: true,
+          autocomplete: true,
+        },
+      ],
+    },
+    {
+      name: "view_all",
+      description: "View all monitors in the system",
       type: 1,
     },
   ],
 
+  autocomplete: async (interaction) => {
+    const focused = interaction.options.getFocused(true);
+
+    const all = getAllMonitorNames.all();
+
+    const filtered = all
+      .filter((m) =>
+        m.name.toLowerCase().startsWith(focused.value.toLowerCase())
+      )
+      .slice(0, 25)
+      .map((m) => ({ name: m.name, value: m.name }));
+
+    return filtered;
+  },
+
   async execute(interaction) {
     if (!interaction.inCachedGuild()) return;
-    const { options, channel, client, guild } = interaction;
+    const { options, channel } = interaction;
+
+    if (channel?.type !== ChannelType.GuildText) {
+      throw new Error("This command must be run in a text channel.");
+    }
 
     const subcommand = options.getSubcommand();
-
-    if (channel?.type !== ChannelType.GuildText)
-      throw new Error("Must run within a text channel!");
-
     const channelId = channel.id;
 
     if (subcommand === "set") {
-      const vintedURL = options.getString("vinted_url", true);
-
-      let webhook;
-
-      webhook = (await channel.fetchWebhooks()).find(
-        (wh) => wh.owner?.id === client.user.id
-      );
-
-      if (!webhook) {
-        webhook = await channel.createWebhook({
-          name: "Vinted Monitor",
-          avatar: client.user.displayAvatarURL(),
-        });
-      }
+      const name = options.getString("monitor_name", true);
+      const targetURL = options.getString("target_url", true);
 
       createMonitor.run({
+        id: randomUUID(),
+        name,
+        targetURL,
         channelId,
-        vintedURL,
-        webhookId: webhook.id,
-        webhookToken: webhook.token!,
       });
 
-      await interaction.reply(`✅ Monitor set for: ${vintedURL}`);
+      await interaction.reply(`✅ Monitor \`${name}\` set for: ${targetURL}`);
     }
 
     if (subcommand === "remove") {
-      const result = deleteMonitor.run({ channelId });
+      const name = options.getString("monitor_name", true);
+      const result = deleteMonitorByName.run({ name });
 
-      console.log(result);
+      if (result.changes === 0) {
+        throw new Error(`❌ No monitor found with name: ${name}`);
+      }
 
-      if (result.changes === 0)
-        throw new Error("⚠️ No monitor is set for this channel.");
-
-      await interaction.reply(`🗑️ Monitor removed for this channel.`);
+      await interaction.reply(`🗑️ Monitor \`${name}\` removed.`);
     }
 
     if (subcommand === "view") {
-      const monitors = getAllMonitors.all();
+      const name = options.getString("monitor_name", true);
+      const monitor = getMonitorByName.get({ name });
 
-      if (monitors.length === 0)
-        throw new Error("📭 No monitors set for any channels.");
-
-      const embed = new EmbedBuilder()
-        .setTitle("📋 Active Vinted Monitors")
-        .setColor(0x0099ff);
-
-      let desc = "";
-
-      for (const [i, monitor] of monitors.entries()) {
-        const channelObj = guild.channels.cache.get(monitor.channelId);
-
-        desc += `${i + 1}. ${channelObj ?? channelId}: ${monitor.vintedURL}\n\n`;
+      if (!monitor) {
+        throw new Error(`❌ No monitor found with name: ${name}`);
       }
 
-      embed.setDescription(desc);
+      const embed = new EmbedBuilder()
+        .setTitle(`📦 Monitor: ${name}`)
+        .setDescription(
+          `**Target URL**: ${monitor.targetURL}\n\n` +
+            `**Stock Status**: ${monitor.stockStatus}\n\n` +
+            `**Channel**: <#${monitor.channelId}>`
+        )
+        .setColor(0x00bfff);
+
+      await interaction.reply({ embeds: [embed] });
+    }
+
+    if (subcommand === "view_all") {
+      const monitors = getAllMonitors.all();
+
+      if (!monitors.length) {
+        return await interaction.reply("📭 No monitors found.");
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle("📋 All Active Target Monitors")
+        .setColor(0x00bfff);
+
+      const description = monitors
+        .map(
+          (m, i) =>
+            `**${i + 1}.** [${m.name}](${m.targetURL}) <#${m.channelId}>\n`
+        )
+        .join("\n");
+
+      embed.setDescription(description.slice(0, 4000));
 
       await interaction.reply({ embeds: [embed] });
     }

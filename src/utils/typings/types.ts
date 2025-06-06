@@ -15,9 +15,14 @@ export interface extendedAPICommand
   execute(interaction: ChatInputCommandInteraction): Promise<any>;
 }
 
+export type StockStatus = "IN_STOCK" | "OUT_OF_STOCK";
+
 export interface Monitor {
+  id: string;
+  name: string;
   channelId: string;
-  vintedURL: string;
-  webhookId: string;
-  webhookToken: string;
+  targetURL: string;
+  stockStatus: StockStatus;
 }
+
+export interface MonitorCreateOptions extends Omit<Monitor, "stockStatus"> {}

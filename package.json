@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "npm run build && node --env-file=.env dist/index.js",
-    "dev": "nodemon --env-file=.env dist/index.js -w dist",
+    "dev": "tsc-watch --onCompilationComplete  \"node  --env-file=.env dist/index.js\"",
     "build": "rimraf dist && tsc",
     "build:dev": "tsc -w"
   },
@@ -15,15 +15,17 @@
   "description": "",
   "devDependencies": {
     "@types/node": "^22.13.4",
-    "nodemon": "^3.1.9",
-    "rimraf": "^6.0.1",
-    "typescript": "^5.7.3"
+    "tsc-watch": "^7.1.1"
   },
   "dependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^11.9.1",
     "cron": "^4.3.0",
     "discord.js": "^14.18.0",
-    "node-curl-impersonate": "^1.5.4"
+    "puppeteer": "^24.10.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.3"
   }
 }
