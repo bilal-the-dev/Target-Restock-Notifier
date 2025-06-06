@@ -15,8 +15,8 @@ export default {
   description: "Manage Target product monitors",
   options: [
     {
-      name: "set",
-      description: "Create or update a monitor for a Target product",
+      name: "add",
+      description: "Create a monitor for a Target product",
       type: 1,
       options: [
         {
@@ -94,7 +94,7 @@ export default {
     const subcommand = options.getSubcommand();
     const channelId = channel.id;
 
-    if (subcommand === "set") {
+    if (subcommand === "add") {
       const name = options.getString("monitor_name", true);
       const targetURL = options.getString("target_url", true);
 
